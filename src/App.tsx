@@ -2,7 +2,7 @@ import React from 'react';
 
 function App() {
   return (
-    <div className="App h-screen bg-gradient-to-b from-blue-500 to-black">
+    <div className="App h-screen bg-gradient-to-b from-blue-500 to-black font-sans">
       <header className="App-header flex items-center justify-center h-full p-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           <div className="text-white flex flex-col justify-center">
