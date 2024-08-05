@@ -1,0 +1,24 @@
+.card {
+    background: linear-gradient(to top right, #38b2ac, #3182ce, #9f7aea);
+    width: 100%;
+    max-width: 400px;
+    height: 300px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+    border-radius: 15px;
+    transition: transform 0.3s ease;
+  }
+  
+  .card-inner {
+    height: 100%;
+    width: 100%;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 15px;
+  }
+  
+  .card:hover {
+    transform: rotate(3deg) scale(1.05);
+  }
+  
