@@ -8,6 +8,10 @@ module.exports = {
       fontFamily: {
         sans: ['Rowdies', 'sans-serif'],
       },
+      width: {
+        '7/8': '87.5%',
+      }
+  
     },
   },
   plugins: [],

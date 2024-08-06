@@ -1,7 +1,7 @@
 import React from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import './App.css';  // Import the CSS file
-
+import Footer from './components/footer'; 
 
 
 function CustomConnectButton() {
@@ -128,60 +128,31 @@ function App() {
           </div>
         </section>
         <section className="grid grid-cols-1 md:grid-cols-5 gap-8 max-w-4xl mx-auto py-8">
-          <div className="flex items-center justify-center">
-          <div className='text-white text-center'>
-
-            <div className="card bg-gradient-to-tr from-green-300 via-blue-500 to-purple-600 w-full max-w-md h-64 shadow-lg transform transition-transform hover:rotate-3 hover:scale-105">
-              <div className="card-inner h-full w-full p-8 flex items-center justify-center ">
-                <div className='text-white font-bold text-2xl absolute top-2 left-2'> NFT Card</div>
-               
-              <img src={`${process.env.PUBLIC_URL}/topg.webp`} alt="Example" className="w-1/2 h-1/ max-w-md pb-3" />              </div>
-            </div>
-            Top G
-          </div>  
-          </div>    
-  
-          <div className='text-white text-center'>
-                             <div className="card bg-gradient-to-tr from-green-300 via-blue-500 to-purple-600 w-full max-w-md h-64 shadow-lg transform transition-transform hover:rotate-3 hover:scale-105">
-              <div className="card-inner h-full w-full p-8 flex items-center justify-center ">
-                <div className='text-white font-bold text-2xl absolute top-2 left-2'> NFT Card</div>
-               
-              <img src={`${process.env.PUBLIC_URL}/warrior.png`} alt="Example" className="w-1/2 h-1/ max-w-md pb-3" />              </div>
-            </div>  Warrior
-            </div>
-            
-            <div className='text-white text-center'>
-                             <div className="card bg-gradient-to-tr from-green-300 via-blue-500 to-purple-600 w-full max-w-md h-64 shadow-lg transform transition-transform hover:rotate-3 hover:scale-105">
-              <div className="card-inner h-full w-full p-8 flex items-center justify-center ">
-                <div className='text-white font-bold text-2xl absolute top-2 left-2'> NFT Card</div>
-               
-              <img src={`${process.env.PUBLIC_URL}/eminen.png`} alt="Example" className="w-1/2 h-1/ max-w-md pb-3" />              </div>
-            </div>  Eminen Fan
-            </div>
-            <div className='text-white text-center'>
-                             <div className="card bg-gradient-to-tr from-green-300 via-blue-500 to-purple-600 w-full max-w-md h-64 shadow-lg transform transition-transform hover:rotate-3 hover:scale-105">
-              <div className="card-inner h-full w-full p-8 flex items-center justify-center ">
-                <div className='text-white font-bold text-2xl absolute top-2 left-2'> NFT Card</div>
-               
-              <img src={`${process.env.PUBLIC_URL}/catowner2bg.png`} alt="Example" className="w-1/2 h-1/ max-w-md pb-3" />              </div>
-            </div>  Catowner
-            </div>
-
-
-
-
-
-            <div className='text-white text-center'>
-                             <div className="card bg-gradient-to-tr from-green-300 via-blue-500 to-purple-600 w-full max-w-md h-64 shadow-lg transform transition-transform hover:rotate-3 hover:scale-105">
-              <div className="card-inner h-full w-full p-8 flex items-center justify-center ">
-                <div className='text-white font-bold text-2xl absolute top-2 left-2'> NFT Card</div>
-               
-              <img src={`${process.env.PUBLIC_URL}/vegan.png`} alt="Example" className="w-1/2 h-1/ max-w-md pb-3" />              </div>
-            </div>  Vegan
-            </div>
-        </section>
-
+  {[
+    { src: "topg.webp", label: "Top G" },
+    { src: "warrior.png", label: "Warrior" },
+    { src: "eminen.png", label: "Eminen Fan" },
+    { src: "catowner2bg.png", label: "Cat Owner" },
+    { src: "vegan.png", label: "Vegan" }
+  ].map((nft, index) => (
+    <div className="flex items-center justify-center">
+      <div className='text-white text-center'>
+        <div className="card bg-gradient-to-tr from-green-300 via-blue-500 to-purple-600 w-full max-w-md h-64 shadow-lg transform transition-transform hover:rotate-3 hover:scale-105">
+          <div className="card-inner h-full w-full p-8 flex items-center justify-center">
+            <div className='text-white font-bold text-2xl absolute top-2 left-2'> NFT Card</div>
+            <img src={`${process.env.PUBLIC_URL}/${nft.src}`} alt={nft.label} className="w-1/2 md:w-7/8 max-w-md pb-3" />
+          </div>
+        </div>
+        <p className="mt-2 font-bold">{nft.label}</p>
+      </div>
+    </div>
+  ))}
+</section>
       </main>
+      <Footer />
+
+
+
     </div>
   );
 }
