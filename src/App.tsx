@@ -131,7 +131,25 @@ function MainContent() {
       <section className="flex items-center justify-center h-64 text-white">
         <p className="text-2xl">Let's see the level of G you are...</p>
       </section>
-      <section className="grid grid-cols-1 md:grid-cols-5 gap-8 max-w-4xl mx-auto py-8">
+
+
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto py-8">
+          <div className="flex items-center justify-center">
+            <div className="card bg-gradient-to-tr from-green-300 via-blue-500 to-purple-600 w-full max-w-md h-64 shadow-lg transform transition-transform hover:rotate-3 hover:scale-105">
+              <div className="card-inner h-full w-full p-8 flex items-center justify-center ">
+                <div className='text-white font-bold text-2xl absolute top-2 left-2'> NFT Card</div>
+
+              <img src={`${process.env.PUBLIC_URL}/topg.webp`} alt="Example" className="w-1/2 h-1/ max-w-md pb-3" />              </div>
+            </div>
+
+          </div>    
+
+          <div className="text-white flex flex-col justify-center">
+            <h1 className="text-4xl font-bold mb-4 text-center md:text-left">Depending on which price you sell your tokens, you will receive one NFT</h1>
+          </div>
+        </section>
+
+      <section className="grid grid-cols-1 md:grid-cols-5 gap-8 max-w-4xl mx-auto py-8 mt-8">
         {[
           { src: "topg.webp", label: "Top G" },
           { src: "warrior.png", label: "Warrior" },
