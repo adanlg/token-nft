@@ -2,7 +2,7 @@
 import '@rainbow-me/rainbowkit/styles.css';
 import { getDefaultConfig, RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { createConfig } from 'wagmi';
-import { polygon } from 'wagmi/chains';
+import { polygon, sepolia } from 'wagmi/chains';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cookieStorage, createStorage } from 'wagmi';
 
@@ -14,7 +14,7 @@ const config = getDefaultConfig({
   appName: 'My RainbowKit App',
   ssr: false,
   projectId,
-  chains: [polygon],
+  chains: [polygon, sepolia],
   storage: createStorage({
     storage: cookieStorage,
   }),});
