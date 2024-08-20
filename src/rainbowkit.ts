@@ -14,7 +14,7 @@ const config = getDefaultConfig({
   appName: 'My RainbowKit App',
   ssr: false,
   projectId,
-  chains: [polygon, sepolia],
+  chains: [ sepolia],
   storage: createStorage({
     storage: cookieStorage,
   }),});

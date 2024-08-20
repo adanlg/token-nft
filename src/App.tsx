@@ -1,13 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import PrivacyPolicy from './PrivacyPolicy';
 import Footer from './components/Footer';
 import './App.css'; 
+
 import { useWalletClient, usePublicClient, useWriteContract, useAccount } from 'wagmi';
 import { sepolia } from 'viem/chains';
 import { erc20ABI } from './abi';
 import { Buffer } from 'buffer'; // Import Buffer from buffer library
+import { ethers } from 'ethers';
 
 function CustomConnectButton() {
   return (
@@ -116,6 +118,8 @@ function MainContent() {
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
   const { address } = useAccount();
+  const { data: walletClient } = useWalletClient();
+
 
   const pairAddress = "0xebfb595B01E8eF66795545C7e8d329dff9cE3B8d";  // Replace with the actual pair address
   const pairABI = [
@@ -155,74 +159,185 @@ function MainContent() {
     {"constant":false,"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"}
   ];
 
-  const approvalAmount = 1000000; // Example approval amount
+  const approvalAmount = 1000000;
+
+
+
+
+
+
 
   async function handleBuy() {
     try {
-      console.log('Handling the token approval and swap process');
-  
-      if (!publicClient) {
-        throw new Error("Public client is not available.");
-      }
-  
-      const allowance: bigint = await publicClient.readContract({
-        address: "0x7169D38820dfd117C3FA1f22a697dBA58d90BA06",
-        functionName: 'allowance',
-        abi: erc20ABI,
-        args: [address, pairAddress],
-      }) as bigint;
+        console.log('Handling the token approval and swap process');
 
-      if (allowance < BigInt(approvalAmount)) {
-        await writeContractAsync({
-          chainId: sepolia.id,
-          address: "0x7169D38820dfd117C3FA1f22a697dBA58d90BA06",
-          functionName: 'approve',
-          abi: erc20ABI,
-          args: [pairAddress, 0],
+        if (!publicClient) {
+            console.error("Public client is not available.");
+            return;
+        }
+
+        // Fetch the minimum liquidity requirement
+        let minimumLiquidity;
+        try {
+            minimumLiquidity = await publicClient.readContract({
+                address: pairAddress,
+                functionName: 'MINIMUM_LIQUIDITY',
+                abi: pairABI,
+            }) as bigint;
+
+            console.log('MINIMUM_LIQUIDITY:', minimumLiquidity.toString());
+        } catch (error) {
+            console.error("Error fetching MINIMUM_LIQUIDITY:", error);
+            return;
+        }
+
+        const approvalAmount = BigInt(1 * 10 ** 6); // 1 USDT assuming 6 decimals
+        const usdtTokenAddress = "0x00Fb2BBaC39E872E92c1808779bD7424545eFE97"; // USDT (token1)
+        const myTokenAddress = "0x7169D38820dfd117C3FA1f22a697dBA58d90BA06"; // MyToken (token0)
+        const amountIn = BigInt(1 * 10 ** 6); // 1 USDT assuming 6 decimals
+
+        // Check if the USDT allowance is sufficient
+        const usdtAllowance = await publicClient.readContract({
+            address: usdtTokenAddress,
+            functionName: 'allowance',
+            abi: erc20ABI,
+            args: [address, pairAddress],
+        }) as bigint;
+
+        if (usdtAllowance < approvalAmount) {
+            await writeContractAsync({
+                chainId: sepolia.id,
+                address: usdtTokenAddress,
+                functionName: 'approve',
+                abi: erc20ABI,
+                args: [pairAddress, approvalAmount],
+            });
+            console.log('USDT allowance approved.');
+        } else {
+            console.log('Existing USDT allowance is sufficient, no need to re-approve.');
+        }
+
+        // Fetch reserves
+        let reserves;
+        try {
+            reserves = await publicClient.readContract({
+                address: pairAddress,
+                functionName: 'getReserves',
+                abi: pairABI,
+            }) as [bigint, bigint, number];
+
+            console.log('Reserves:', reserves);
+        } catch (reserveError) {
+            console.error("Error fetching reserves:", reserveError);
+            return;
+        }
+
+        const [reserve0, reserve1] = reserves;  // reserve0 is for myToken, reserve1 is for USDT
+        console.log('Reserve0 (myToken):', reserve0);
+        console.log('Reserve1 (USDT):', reserve1);
+
+        // Calculate amountOutMin based on reserves and input amount
+        let amountOutMin = (amountIn * reserve0) / (reserve1 + amountIn);
+
+        // Apply a 50% slippage tolerance
+        const slippageTolerance = BigInt(50); // 50% slippage tolerance
+        const slippageAdjustedAmountOutMin = amountOutMin * (BigInt(100) - slippageTolerance) / BigInt(100);
+
+        // Ensure that the output amount does not exceed the available liquidity in the pool minus the MINIMUM_LIQUIDITY
+        if (slippageAdjustedAmountOutMin > reserve0 - minimumLiquidity) {
+            amountOutMin = reserve0 - minimumLiquidity;
+        } else {
+            amountOutMin = slippageAdjustedAmountOutMin;
+        }
+
+        console.log('Amount of myToken to receive (with slippage):', amountOutMin.toString());
+
+        const to = address!;
+        const data = "0x"; // Usually empty unless performing a flash swap
+
+        // Check if amountOutMin meets the contract's requirements before sending the transaction
+        if (amountOutMin <= BigInt(0)) {
+            console.error("AmountOutMin must be greater than 0");
+            return;
+        }
+
+        // Perform the swap, ensuring not to exceed the liquidity available
+        const swapTx = await writeContractAsync({
+            chainId: sepolia.id,
+            address: pairAddress,
+            functionName: 'swap',
+            abi: pairABI,
+            args: [(0), amountOutMin, to, data], // amount0Out = 0 because you're not sending out myToken, amount1Out = amountOutMin
         });
 
-        const txHash = await writeContractAsync({
-          chainId: sepolia.id,
-          address: "0x7169D38820dfd117C3FA1f22a697dBA58d90BA06",
-          functionName: 'approve',
-          abi: erc20ABI,
-          args: [pairAddress, BigInt(approvalAmount)],
-        });
-        console.log('Approval transaction sent:', txHash);
-
-        const txReceipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
-        console.log('Approval transaction confirmed:', txReceipt);
-      } else {
-        console.log('Existing allowance is sufficient, no need to re-approve.');
-      }
-      
-      const tokenIn = "0x7169D38820dfd117C3FA1f22a697dBA58d90BA06"; // Token to swap
-      const tokenOut = "0x00Fb2BBaC39E872E92c1808779bD7424545eFE97"; // Token to receive
-      const amountOutMin = 0; // Minimum amount of tokenOut to receive
-      const amountIn = BigInt(1000000); // Amount of tokenIn to swap
-
-      // Swap tokens directly using the pair contract
-      const amount0Out = tokenIn === "0x7169D38820dfd117C3FA1f22a697dBA58d90BA06" ? amountOutMin : 0;
-      const amount1Out = tokenIn !== "0x7169D38820dfd117C3FA1f22a697dBA58d90BA06" ? amountOutMin : 0;
-      const to = address!;
-      const data = "0x"; // Usually empty unless performing a flash swap
-
-      const swapTx = await writeContractAsync({
-        chainId: sepolia.id,
-        address: pairAddress,
-        functionName: 'swap',
-        abi: pairABI,
-        args: [amount0Out, amount1Out, to, data],
-      });
-
-      console.log(`Swap transaction sent with hash: ${swapTx}`);
-      const swapReceipt = await publicClient.waitForTransactionReceipt({ hash: swapTx });
-      console.log('Swap transaction confirmed:', swapReceipt);
+        console.log(`Swap transaction sent with hash: ${swapTx}`);
+        const swapReceipt = await publicClient.waitForTransactionReceipt({ hash: swapTx });
+        console.log('Swap transaction confirmed:', swapReceipt);
     } catch (error) {
-      console.error("Error in handleBuy function:", error);
+        console.error("Error in handleBuy function:", error);
     }
+
+
+
+}
+
+
+
+
+
+
+
+
+
+useEffect(() => {
+  console.log("Wallet Client:", walletClient);
+  console.log("Public Client:", publicClient);
+  console.log("Signer:", signer);
+
+  if (!walletClient || !publicClient || !signer) {
+    console.error("Public client or wallet client is not available.");
+    return;
   }
 
+  const provider = new ethers.BrowserProvider(walletClient);
+  const contract = new ethers.Contract(pairAddress, pairABI, provider);
+
+  const listenForSwap = () => {
+    contract.on('Swap', (sender, amount0In, amount1In, amount0Out, amount1Out, to, event) => {
+      console.log('Congratulations! Swap event detected:', {
+        sender,
+        amount0In,
+        amount1In,
+        amount0Out,
+        amount1Out,
+        to,
+        event
+      });
+    });
+  };
+
+  listenForSwap();
+
+  return () => {
+    contract.removeAllListeners('Swap');
+  };
+}, [walletClient]);
+
+
+
+
+
+
+
+
+
+
+
+
+
+//aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+
+  
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-8 bg-gradient-to-b from-transparent via-blue-900 to-slate-900">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
