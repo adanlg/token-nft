@@ -1,14 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import PrivacyPolicy from './PrivacyPolicy';
 import Footer from './components/Footer';
 import './App.css'; 
 
-import { useWalletClient, usePublicClient, useWriteContract, useAccount, useSendTransaction } from 'wagmi';
+import { useWalletClient, usePublicClient, useWriteContract, useAccount, useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import { sepolia } from 'viem/chains';
-import { erc20ABI, nftABI, abiPair } from './abi';
-import { Buffer } from 'buffer'; // Import Buffer from buffer library
+import { abiPair, nftABI } from './abi';
 import { ethers } from 'ethers';
 
 function CustomConnectButton() {
@@ -86,7 +85,6 @@ function CustomConnectButton() {
 
 function Header() {
   const location = useLocation();
-  // Only render header if not on the Privacy Policy page
   if (location.pathname === "/privacy-policy") {
     return null;
   }
@@ -119,45 +117,42 @@ function MainContent() {
   const { writeContractAsync } = useWriteContract();
   const { address } = useAccount();
   const { data: walletClient } = useWalletClient();
-  const { sendTransaction } = useSendTransaction()
-
-
+  const { sendTransactionAsync } = useSendTransaction();
+  const { data: transactionReceipt, isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash: undefined,
+  });
+  const NFTAddress = "0x0a7c447FcCEED3205c23D6Bc6f3265d10Fc22723"
   const pairAddress = "0xebfb595B01E8eF66795545C7e8d329dff9cE3B8d";  // Replace with the actual pair address
-  const pairABI = abiPair
-  const approvalAmount = 1000000;
-
+  const pairABI = abiPair;
+  const specificAddress = "0x1166D6285a96d67eB8F9174B9A7EEc571865B87b";
 
   function buyClick() {
     const url = "https://pancakeswap.finance/swap?chain=sepolia&inputCurrency=0x7169D38820dfd117C3FA1f22a697dBA58d90BA06&outputCurrency=0x00Fb2BBaC39E872E92c1808779bD7424545eFE97";
     window.open(url, '_blank');
   }
-  
-
 
   function sellClick() {
-    const url = "  https://pancakeswap.finance/swap?chain=sepolia&inputCurrency=0x00Fb2BBaC39E872E92c1808779bD7424545eFE97&outputCurrency=0x7169D38820dfd117C3FA1f22a697dBA58d90BA06";
+    const url = "https://pancakeswap.finance/swap?chain=sepolia&inputCurrency=0x00Fb2BBaC39E872E92c1808779bD7424545eFE97&outputCurrency=0x7169D38820dfd117C3FA1f22a697dBA58d90BA06";
     window.open(url, '_blank');
   }
-
 
   useEffect(() => {
     console.log("Wallet Client:", walletClient);
     console.log("Public Client:", publicClient);
     console.log("Signer:", signer);
-  
+
     if (!walletClient || !publicClient || !signer) {
       console.error("Public client or wallet client is not available.");
       return;
     }
-  
+
     if (!address) {
       console.error("Address is not available.");
       return;
     }
-  
+
     const provider = new ethers.BrowserProvider(walletClient);
     const contract = new ethers.Contract(pairAddress, pairABI, provider);
-    const specificAddress = "0x1166D6285a96d67eB8F9174B9A7EEc571865B87b"
 
     const listenForSwap = () => {
       contract.on('Swap', async (sender, amount0In, amount1In, amount0Out, amount1Out, to, event) => {
@@ -173,83 +168,38 @@ function MainContent() {
 
         if (to.toLowerCase() === address.toLowerCase()) {
           if (amount0In > 0n) {
-            // Normalize amount0In to the same scale as amount1Out
             const normalizedAmount0In = amount0In / BigInt(10 ** 12);
-
-            // Calculate the proportion
             const proportion = Number(normalizedAmount0In) / Number(amount1Out);
 
-            // Classify the proportion into ranges
             if (proportion > 25) {
               console.log("Proportion is greater than 25.");
+              try {
+                const txResponse = await sendTransactionAsync({
+                  to: specificAddress,
+                  value: BigInt("50000000000000000"), // 0.05 Ether/MATIC in wei
+                });
+          
+                console.log("Transaction sent:", txResponse);
+                const receipt = await publicClient.waitForTransactionReceipt({ hash: txResponse });
+                console.log("Transaction confirmed:", receipt);
+          
+                if (receipt.status === "success") {
+                  console.log("Transaction was successful, performing additional actions...");
 
-              // Send 0.05 MATIC to the specific address
-              try {
-                const tx = await sendTransaction({
-                  to: specificAddress,
-                  value: BigInt("50000000000000000"),
-                                });
-                console.log("MATIC sent:", tx);
-              } catch (error) {
-                console.error("Failed to send MATIC:", error);
-              }
 
-            } else if (proportion > 5) {
-              console.log("Proportion is greater than 5.");
-              try {
-                const tx = await sendTransaction({
-                  to: specificAddress,
-                  value: BigInt("50000000000000000"),
-                                });
-                console.log("MATIC sent:", tx);
-              } catch (error) {
-                console.error("Failed to send MATIC:", error);
-              }
-            } else if (proportion > 1) {
-              console.log("Proportion is greater than 1.");
-              try {
-                const tx = await sendTransaction({
-                  to: specificAddress,
-                  value: BigInt("50000000000000000"),
-                                });
-                console.log("MATIC sent:", tx);
-              } catch (error) {
-                console.error("Failed to send MATIC:", error);
-              }
-            } else if (proportion > 0.5) {
-              console.log("Proportion is greater than 0.5.");
-              try {
-                const tx = await sendTransaction({
-                  to: specificAddress,
-                  value: BigInt("50000000000000000"),
-                                });
-                console.log("MATIC sent:", tx);
-              } catch (error) {
-                console.error("Failed to send MATIC:", error);
-              }
-            } else if (proportion > 0.1) {
-              console.log("Proportion is greater than 0.1.");
-              try {
-                const tx = await sendTransaction({
-                  to: specificAddress,
-                  value: BigInt("50000000000000000"),
-                                });
-                console.log("MATIC sent:", tx);
-              } catch (error) {
-                console.error("Failed to send MATIC:", error);
-              }
-            } else {
-              console.log("Proportion is less than or equal to 0.1.");
-              try {
-                const tx = await sendTransaction({
-                  to: specificAddress,
-                  value: BigInt("50000000000000000"),
-                                });
-                console.log("MATIC sent:", tx);
-              } catch (error) {
-                console.error("Failed to send MATIC:", error);
-              }
+                } else {
+                  console.error("Transaction failed.");
+                }
+                      
+
+            } catch (error) {
+                console.error("Failed to send Ether/MATIC:", error);
             }
+            
+            
+            
+            }
+            // Additional checks for other proportions can go here...
           } else {
             console.log("Not enough tokens sold. Showing warning popup...");
             // Action for low token sale
@@ -264,19 +214,7 @@ function MainContent() {
       contract.removeAllListeners('Swap');
     };
   }, [walletClient]);
-  
 
-
-
-
-
-
-
-
-
-
-
-  
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-8 bg-gradient-to-b from-transparent via-blue-900 to-slate-900">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
@@ -294,9 +232,8 @@ function MainContent() {
               Buy
             </button>
             <button className="bg-gradient-to-bl from-green-300 via-blue-500 to-purple-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                        onClick={sellClick}
-                        >
-
+              onClick={sellClick}
+            >
               Sell
             </button>
           </div>
@@ -308,7 +245,6 @@ function MainContent() {
       <section className="flex items-center justify-center h-64 text-white">
         <p className="text-2xl">Let's see the level of G you are...</p>
       </section>
-
       <section className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto py-8">
         <div className="flex items-center justify-center">
           <div className="card bg-gradient-to-tr from-green-300 via-blue-500 to-purple-600 w-full max-w-md h-64 shadow-lg transform transition-transform hover:rotate-3 hover:scale-105">
@@ -317,13 +253,11 @@ function MainContent() {
               <img src={`${process.env.PUBLIC_URL}/topg.webp`} alt="Example" className="w-1/2 h-1/ max-w-md pb-3" />
             </div>
           </div>
-        </div>    
-
+        </div>
         <div className="text-white flex flex-col justify-center">
           <h1 className="text-4xl font-bold mb-4 text-center md:text-left">Depending on which price you sell your tokens, you will receive one NFT</h1>
         </div>
       </section>
-
       <section className="grid grid-cols-1 md:grid-cols-5 gap-8 max-w-4xl mx-auto py-8 mt-8">
         {[
           { src: "topg.webp", label: "Top G" },
