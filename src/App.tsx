@@ -4,9 +4,9 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import PrivacyPolicy from './PrivacyPolicy';
 import Footer from './components/Footer';
 import './App.css'; 
+import NFTokenPopup from './components/Popup';
 
-import { useWalletClient, usePublicClient, useWriteContract, useAccount, useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
-import { sepolia } from 'viem/chains';
+import { useWalletClient, usePublicClient, useAccount, useSendTransaction } from 'wagmi';
 import { abiPair, nftABI } from './abi';
 import { ethers } from 'ethers';
 
@@ -83,6 +83,10 @@ function CustomConnectButton() {
   );
 }
 
+
+
+
+
 function Header() {
   const location = useLocation();
   if (location.pathname === "/privacy-policy") {
@@ -114,17 +118,52 @@ function App() {
 function MainContent() {
   const { data: signer } = useWalletClient();
   const publicClient = usePublicClient();
-  const { writeContractAsync } = useWriteContract();
   const { address } = useAccount();
-  const { data: walletClient } = useWalletClient();
   const { sendTransactionAsync } = useSendTransaction();
-  const { data: transactionReceipt, isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
-    hash: undefined,
-  });
-  const NFTAddress = "0x0a7c447FcCEED3205c23D6Bc6f3265d10Fc22723"
+  const [tokenURI, setTokenURI] = useState<string | null>(null);
+  const { data: walletClient } = useWalletClient();
+
+  const NFTAddress = "0x0a7c447FcCEED3205c23D6Bc6f3265d10Fc22723";
   const pairAddress = "0xebfb595B01E8eF66795545C7e8d329dff9cE3B8d";  // Replace with the actual pair address
-  const pairABI = abiPair;
   const specificAddress = "0x1166D6285a96d67eB8F9174B9A7EEc571865B87b";
+
+  async function handleMint() {
+    const mintedTokenURI = await mintNFT(address as `0x${string}`);
+    if (mintedTokenURI) {
+      setTokenURI(mintedTokenURI);
+    }
+  }
+
+  function handleClosePopup() {
+    setTokenURI(null);
+  }
+
+  async function mintNFT(toAddress: `0x${string}`): Promise<string | void> {
+    try {
+      const privateKey = process.env.REACT_APP_PRIVATE_KEY;
+      if (!privateKey) {
+        throw new Error('Private key is not defined in .env file.');
+      }
+
+      const provider = new ethers.JsonRpcProvider(`https://ethereum-sepolia-rpc.publicnode.com`);
+      const wallet = new ethers.Wallet(privateKey, provider);
+      const nftContract = new ethers.Contract(NFTAddress, nftABI, wallet);
+
+      const tx = await nftContract.safeMint(toAddress);
+      console.log('Mint transaction sent:', tx.hash);
+
+      const receipt = await tx.wait();
+      console.log('Mint transaction confirmed:', receipt);
+
+      const tokenId = 0;
+      const tokenURI = await nftContract.tokenURI(tokenId);
+      console.log('Minted NFT tokenURI:', tokenURI);
+  
+      return tokenURI;
+    } catch (error) {
+      console.error('Failed to mint NFT:', error);
+    }
+  }
 
   function buyClick() {
     const url = "https://pancakeswap.finance/swap?chain=sepolia&inputCurrency=0x7169D38820dfd117C3FA1f22a697dBA58d90BA06&outputCurrency=0x00Fb2BBaC39E872E92c1808779bD7424545eFE97";
@@ -137,72 +176,50 @@ function MainContent() {
   }
 
   useEffect(() => {
-    console.log("Wallet Client:", walletClient);
-    console.log("Public Client:", publicClient);
-    console.log("Signer:", signer);
-
-    if (!walletClient || !publicClient || !signer) {
-      console.error("Public client or wallet client is not available.");
-      return;
-    }
-
-    if (!address) {
-      console.error("Address is not available.");
+    if (!signer || !address || !walletClient || !publicClient) {
+      console.error("Signer, address, or wallet client is not available.");
       return;
     }
 
     const provider = new ethers.BrowserProvider(walletClient);
-    const contract = new ethers.Contract(pairAddress, pairABI, provider);
+    const contract = new ethers.Contract(pairAddress, abiPair, provider);
+
+    let swapEventHandled = false;
 
     const listenForSwap = () => {
-      contract.on('Swap', async (sender, amount0In, amount1In, amount0Out, amount1Out, to, event) => {
-        console.log('Swap event detected:', {
-          sender,
-          amount0In,
-          amount1In,
-          amount0Out,
-          amount1Out,
-          to,
-          event
-        });
+      contract.on('Swap', async (sender, amount0In, amount1In, amount0Out, amount1Out, to) => {
+        console.log('Swap event detected:', { sender, amount0In, amount1In, amount0Out, amount1Out, to });
 
-        if (to.toLowerCase() === address.toLowerCase()) {
-          if (amount0In > 0n) {
-            const normalizedAmount0In = amount0In / BigInt(10 ** 12);
-            const proportion = Number(normalizedAmount0In) / Number(amount1Out);
+        if (to.toLowerCase() === address.toLowerCase() && !swapEventHandled) {
+          swapEventHandled = true;
 
-            if (proportion > 25) {
-              console.log("Proportion is greater than 25.");
-              try {
-                const txResponse = await sendTransactionAsync({
-                  to: specificAddress,
-                  value: BigInt("50000000000000000"), // 0.05 Ether/MATIC in wei
-                });
-          
-                console.log("Transaction sent:", txResponse);
-                const receipt = await publicClient.waitForTransactionReceipt({ hash: txResponse });
-                console.log("Transaction confirmed:", receipt);
-          
-                if (receipt.status === "success") {
-                  console.log("Transaction was successful, performing additional actions...");
+          const normalizedAmount0In = amount0In / BigInt(10 ** 12);
+          const proportion = Number(normalizedAmount0In) / Number(amount1Out);
 
+          if (proportion > 0) {
+            console.log("Proportion is greater than 25.");
+            try {
+              const txResponse = await sendTransactionAsync({
+                to: specificAddress,
+                value: BigInt("5000000000000000"), // 0.05 Ether/MATIC in wei
+              });
 
-                } else {
-                  console.error("Transaction failed.");
+              console.log("Transaction sent:", txResponse);
+              const receipt = await publicClient.waitForTransactionReceipt({ hash: txResponse });
+              console.log("Transaction confirmed:", receipt);
+
+              if (receipt.status === "success") {
+                console.log("Transaction was successful, performing additional actions...");
+                const mintedTokenURI = await mintNFT(address as `0x${string}`);
+                if (mintedTokenURI) {
+                  setTokenURI(mintedTokenURI);
                 }
-                      
-
+              } else {
+                console.error("Transaction failed.");
+              }
             } catch (error) {
-                console.error("Failed to send Ether/MATIC:", error);
+              console.error("Failed to send Ether/MATIC:", error);
             }
-            
-            
-            
-            }
-            // Additional checks for other proportions can go here...
-          } else {
-            console.log("Not enough tokens sold. Showing warning popup...");
-            // Action for low token sale
           }
         }
       });
@@ -213,7 +230,8 @@ function MainContent() {
     return () => {
       contract.removeAllListeners('Swap');
     };
-  }, [walletClient]);
+  }, [signer, walletClient]);
+
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-8 bg-gradient-to-b from-transparent via-blue-900 to-slate-900">
@@ -284,3 +302,6 @@ function MainContent() {
 }
 
 export default App;
+
+
+//chek point nft fail
