@@ -195,11 +195,16 @@ function MainContent() {
         console.log('Swap event detected:', { sender, amount0In, amount1In, amount0Out, amount1Out, to });
 
         if (to.toLowerCase() === address.toLowerCase() && !swapEventHandled) {
-          swapEventHandled = true;
-          setIsLoading(true);
-          const normalizedAmount0In = amount0In / BigInt(10 ** 12);
-          const proportion = Number(normalizedAmount0In) / Number(amount1Out);
+          if (amount0In === 0n) {
+            console.log("amount0In is zero, skipping proportion calculations");
+            // Optionally, you can still perform some action here if needed
+
+          } else {
           try {
+            swapEventHandled = true;
+            setIsLoading(true);
+            const normalizedAmount0In = amount0In / BigInt(10 ** 12);
+            const proportion = Number(normalizedAmount0In) / Number(amount1Out);
           if (proportion > 25) {
             console.log("Proportion is greater than 25.");
             try {
@@ -335,7 +340,7 @@ function MainContent() {
           } finally {
             setIsLoading(false); // Stop loading indicator after transaction
           }
-        }
+        }}
       });
     };
 
