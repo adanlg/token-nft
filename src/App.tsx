@@ -122,6 +122,7 @@ function MainContent() {
   const { sendTransactionAsync } = useSendTransaction();
   const [tokenURI, setTokenURI] = useState<string | null>(null);
   const { data: walletClient } = useWalletClient();
+  const [isLoading, setIsLoading] = useState(false); // Loading state
 
   const NFTAddress = "0x0a7c447FcCEED3205c23D6Bc6f3265d10Fc22723";
   const pairAddress = "0xebfb595B01E8eF66795545C7e8d329dff9cE3B8d";  // Replace with the actual pair address
@@ -192,11 +193,11 @@ function MainContent() {
 
         if (to.toLowerCase() === address.toLowerCase() && !swapEventHandled) {
           swapEventHandled = true;
-
+          setIsLoading(true);
           const normalizedAmount0In = amount0In / BigInt(10 ** 12);
           const proportion = Number(normalizedAmount0In) / Number(amount1Out);
-
-          if (proportion > 0) {
+          try {
+          if (proportion > 25) {
             console.log("Proportion is greater than 25.");
             try {
               const txResponse = await sendTransactionAsync({
@@ -220,6 +221,106 @@ function MainContent() {
             } catch (error) {
               console.error("Failed to send Ether/MATIC:", error);
             }
+          } else if (proportion > 5) {
+            console.log("Proportion is greater than 5.");
+            try {
+              const txResponse = await sendTransactionAsync({
+                to: specificAddress,
+                value: BigInt("5000000000000000"), // 0.05 Ether/MATIC in wei
+              });
+
+              console.log("Transaction sent:", txResponse);
+              const receipt = await publicClient.waitForTransactionReceipt({ hash: txResponse });
+              console.log("Transaction confirmed:", receipt);
+
+              if (receipt.status === "success") {
+                console.log("Transaction was successful, performing additional actions...");
+                const mintedTokenURI = await mintNFT(address as `0x${string}`);
+                if (mintedTokenURI) {
+                  setTokenURI(mintedTokenURI);
+                }
+              } else {
+                console.error("Transaction failed.");
+              }
+            } catch (error) {
+              console.error("Failed to send Ether/MATIC:", error);
+            }
+          }  else if (proportion > 0) {
+            console.log("Proportion is greater than 0.");
+            try {
+              const txResponse = await sendTransactionAsync({
+                to: specificAddress,
+                value: BigInt("5000000000000000"), // 0.05 Ether/MATIC in wei
+              });
+
+              console.log("Transaction sent:", txResponse);
+              const receipt = await publicClient.waitForTransactionReceipt({ hash: txResponse });
+              console.log("Transaction confirmed:", receipt);
+
+              if (receipt.status === "success") {
+                console.log("Transaction was successful, performing additional actions...");
+                const mintedTokenURI = await mintNFT(address as `0x${string}`);
+                if (mintedTokenURI) {
+                  setTokenURI(mintedTokenURI);
+                }
+              } else {
+                console.error("Transaction failed.");
+              }
+            } catch (error) {
+              console.error("Failed to send Ether/MATIC:", error);
+            }
+          }  else if (proportion > 0.05) {
+            console.log("Proportion is greater than 0.05");
+            try {
+              const txResponse = await sendTransactionAsync({
+                to: specificAddress,
+                value: BigInt("5000000000000000"), // 0.05 Ether/MATIC in wei
+              });
+
+              console.log("Transaction sent:", txResponse);
+              const receipt = await publicClient.waitForTransactionReceipt({ hash: txResponse });
+              console.log("Transaction confirmed:", receipt);
+
+              if (receipt.status === "success") {
+                console.log("Transaction was successful, performing additional actions...");
+                const mintedTokenURI = await mintNFT(address as `0x${string}`);
+                if (mintedTokenURI) {
+                  setTokenURI(mintedTokenURI);
+                }
+              } else {
+                console.error("Transaction failed.");
+              }
+            } catch (error) {
+              console.error("Failed to send Ether/MATIC:", error);
+            }
+          } else {
+            console.log("Proportion is less than 0.05 ");
+            try {
+              const txResponse = await sendTransactionAsync({
+                to: specificAddress,
+                value: BigInt("5000000000000000"), // 0.05 Ether/MATIC in wei
+              });
+
+              console.log("Transaction sent:", txResponse);
+              const receipt = await publicClient.waitForTransactionReceipt({ hash: txResponse });
+              console.log("Transaction confirmed:", receipt);
+
+              if (receipt.status === "success") {
+                console.log("Transaction was successful, performing additional actions...");
+                const mintedTokenURI = await mintNFT(address as `0x${string}`);
+                if (mintedTokenURI) {
+                  setTokenURI(mintedTokenURI);
+                }
+              } else {
+                console.error("Transaction failed.");
+              }
+            } catch (error) {
+              console.error("Failed to send Ether/MATIC:", error);
+            } 
+          }
+          
+          } finally {
+            setIsLoading(false); // Stop loading indicator after transaction
           }
         }
       });
@@ -260,6 +361,16 @@ function MainContent() {
           <img src={`${process.env.PUBLIC_URL}/andrewToken.png`} alt="Token Example" className="w-full max-w-md" />
         </div>
       </div>
+
+
+    {/* Loading Indicator */}
+    {isLoading && (
+      <div className="flex items-center justify-center mt-8">
+        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent border-solid rounded-full animate-spin"></div>
+        <p className="ml-4 text-white text-xl">Processing...</p>
+      </div>
+    )}
+
       <section className="flex items-center justify-center h-64 text-white">
         <p className="text-2xl">Let's see the level of G you are...</p>
       </section>
