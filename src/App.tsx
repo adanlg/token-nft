@@ -5,6 +5,7 @@ import PrivacyPolicy from './PrivacyPolicy';
 import Footer from './components/Footer';
 import './App.css'; 
 import NFTokenPopup from './components/Popup';
+import NFTMintedPopup from './components/NFTMintedPopup';
 
 import { useWalletClient, usePublicClient, useAccount, useSendTransaction } from 'wagmi';
 import { abiPair, nftABI } from './abi';
@@ -123,6 +124,7 @@ function MainContent() {
   const [tokenURI, setTokenURI] = useState<string | null>(null);
   const { data: walletClient } = useWalletClient();
   const [isLoading, setIsLoading] = useState(false); // Loading state
+  const [showMintedPopup, setShowMintedPopup] = useState<boolean>(false);
 
   const NFTAddress = "0x0a7c447FcCEED3205c23D6Bc6f3265d10Fc22723";
   const pairAddress = "0xebfb595B01E8eF66795545C7e8d329dff9cE3B8d";  // Replace with the actual pair address
@@ -132,13 +134,14 @@ function MainContent() {
     const mintedTokenURI = await mintNFT(address as `0x${string}`);
     if (mintedTokenURI) {
       setTokenURI(mintedTokenURI);
+      setShowMintedPopup(true);
     }
   }
 
   function handleClosePopup() {
     setTokenURI(null);
+    setShowMintedPopup(false);
   }
-
   async function mintNFT(toAddress: `0x${string}`): Promise<string | void> {
     try {
       const privateKey = process.env.REACT_APP_PRIVATE_KEY;
@@ -214,6 +217,8 @@ function MainContent() {
                 const mintedTokenURI = await mintNFT(address as `0x${string}`);
                 if (mintedTokenURI) {
                   setTokenURI(mintedTokenURI);
+                  setShowMintedPopup(true); // Show the popup when NFT is minted
+
                 }
               } else {
                 console.error("Transaction failed.");
@@ -238,6 +243,8 @@ function MainContent() {
                 const mintedTokenURI = await mintNFT(address as `0x${string}`);
                 if (mintedTokenURI) {
                   setTokenURI(mintedTokenURI);
+                  setShowMintedPopup(true); // Show the popup when NFT is minted
+
                 }
               } else {
                 console.error("Transaction failed.");
@@ -262,6 +269,8 @@ function MainContent() {
                 const mintedTokenURI = await mintNFT(address as `0x${string}`);
                 if (mintedTokenURI) {
                   setTokenURI(mintedTokenURI);
+                  setShowMintedPopup(true); // Show the popup when NFT is minted
+
                 }
               } else {
                 console.error("Transaction failed.");
@@ -286,6 +295,8 @@ function MainContent() {
                 const mintedTokenURI = await mintNFT(address as `0x${string}`);
                 if (mintedTokenURI) {
                   setTokenURI(mintedTokenURI);
+                  setShowMintedPopup(true); // Show the popup when NFT is minted
+
                 }
               } else {
                 console.error("Transaction failed.");
@@ -310,6 +321,8 @@ function MainContent() {
                 const mintedTokenURI = await mintNFT(address as `0x${string}`);
                 if (mintedTokenURI) {
                   setTokenURI(mintedTokenURI);
+                  setShowMintedPopup(true); // Show the popup when NFT is minted
+
                 }
               } else {
                 console.error("Transaction failed.");
@@ -340,8 +353,7 @@ function MainContent() {
         <div className="text-white flex flex-col justify-center">
           <h1 className="text-4xl font-bold mb-4 text-center md:text-left">Top G token</h1>
           <p className="text-lg text-center md:text-left">
-            Este es un ejemplo de una landing page usando React y Tailwind CSS. 
-            Puedes agregar más contenido aquí para describir tu producto o servicio.
+            Only the real Holders will scape the matrix
           </p>
           <div className="flex justify-center md:justify-start space-x-4 mt-4">
             <button
@@ -372,7 +384,8 @@ function MainContent() {
     )}
 
       <section className="flex items-center justify-center h-64 text-white">
-        <p className="text-2xl">Let's see the level of G you are...</p>
+      {/* Let's see the level of G you are... */}
+      <h1 className="text-4xl font-bold mb-4 text-center md:text-left">Let's see the level of G you are...</h1>
       </section>
       <section className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto py-8">
         <div className="flex items-center justify-center">
@@ -408,6 +421,8 @@ function MainContent() {
           </div>
         ))}
       </section>
+      {showMintedPopup && <NFTMintedPopup onClose={handleClosePopup} />}
+
     </main>
   );
 }
