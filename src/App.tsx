@@ -405,6 +405,30 @@ function MainContent() {
           <h1 className="text-4xl font-bold mb-4 text-center md:text-left">Depending on which price you sell your tokens, you will receive one NFT</h1>
         </div>
       </section>
+
+      <section id="video" className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto py-8">
+      <div className="flex flex-col justify-center text-white">
+        <h2 className="text-4xl font-bold mb-4 text-center md:text-left">Watch the Demo</h2>
+        <p className="text-lg text-center md:text-left">
+          Discover how to buy Top G token and obtain the NFT that defines you
+        </p>
+      </div>
+      <div className="flex items-center justify-center">
+        <iframe
+          className="rounded-lg shadow-lg"  // Added class to round corners and add a shadow
+          width="100%" 
+          height="315" 
+          src="https://www.youtube.com/embed/FSRk6xvofZc"
+          title="YouTube video player" 
+          frameBorder="0" 
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+          allowFullScreen
+        ></iframe>
+      </div>
+    </section>
+
+
+
       <section className="grid grid-cols-1 md:grid-cols-5 gap-8 max-w-4xl mx-auto py-8 mt-8">
         {[
           { src: "topg.webp", label: "Top G" },
