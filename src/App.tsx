@@ -149,7 +149,7 @@ function MainContent() {
         throw new Error('Private key is not defined in .env file.');
       }
 
-      const provider = new ethers.JsonRpcProvider(`https://ethereum-sepolia-rpc.publicnode.com`);
+      const provider = new ethers.JsonRpcProvider(`https://ethereum-polygon-rpc.publicnode.com`);
       const wallet = new ethers.Wallet(privateKey, provider);
       const nftContract = new ethers.Contract(NFTAddress, nftABI, wallet);
 
