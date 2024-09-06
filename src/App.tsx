@@ -241,7 +241,7 @@ function MainContent() {
           let uriStorage: string = ""
 
           if (proportion > 25) {
-            uriStorage ="https://gateway.pinata.cloud/ipfs/QmcsKLUdkWSqaJsY8djeMG3ey7HhHNdV6gDqLcjK9SWXvY";
+            uriStorage ="ipfs://QmSDQVFCWtVqBnFf2bsDGctB69H43PuXZNK6eazPg6DFTw";
 
             console.log("Proportion is greater than 25.");
             try {
@@ -274,7 +274,7 @@ function MainContent() {
             }
           } else if (proportion > 5) {
             console.log("Proportion is greater than 5.");
-            uriStorage ="https://gateway.pinata.cloud/ipfs/QmcsKLUdkWSqaJsY8djeMG3ey7HhHNdV6gDqLcjK9SWXvY";
+            uriStorage ="ipfs://QmSDQVFCWtVqBnFf2bsDGctB69H43PuXZNK6eazPg6DFTw";
 
             try {
               const txResponse = await sendTransactionAsync({
