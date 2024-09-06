@@ -126,46 +126,73 @@ function MainContent() {
   const [isLoading, setIsLoading] = useState(false); // Loading state
   const [showMintedPopup, setShowMintedPopup] = useState<boolean>(false);
 
-  const NFTAddress = "0x0a7c447FcCEED3205c23D6Bc6f3265d10Fc22723";
+  const NFTAddress = "0x35ed38a52E99E8597f3A20e0F0922A1f842ca4f1";
   const pairAddress = "0xebfb595B01E8eF66795545C7e8d329dff9cE3B8d";  // Replace with the actual pair address
   const specificAddress = "0x1166D6285a96d67eB8F9174B9A7EEc571865B87b";
 
-  async function handleMint() {
-    const mintedTokenURI = await mintNFT(address as `0x${string}`);
-    if (mintedTokenURI) {
-      setTokenURI(mintedTokenURI);
-      setShowMintedPopup(true);
-    }
-  }
+  // async function handleMint() {
+  //   const mintedTokenURI = await mintNFT(address as `0x${string}`, );
+  //   if (mintedTokenURI) {
+  //     setTokenURI(mintedTokenURI);
+  //     setShowMintedPopup(true);
+  //   }
+  // }
 
   function handleClosePopup() {
     setTokenURI(null);
     setShowMintedPopup(false);
   }
-  async function mintNFT(toAddress: `0x${string}`): Promise<string | void> {
+  async function mintNFT(toAddress: `0x${string}`, uriStorage: string): Promise<string | void> {
+    console.log("mintNFT function called");
+    console.log("toAddress:", toAddress);
+    console.log("uriStorage:", uriStorage);
+  
     try {
       const privateKey = process.env.REACT_APP_PRIVATE_KEY;
+      console.log("Private key retrieved from env");
+      
       if (!privateKey) {
         throw new Error('Private key is not defined in .env file.');
       }
-
-      const provider = new ethers.JsonRpcProvider(`https://ethereum-polygon-rpc.publicnode.com`);
+      
+      console.log('Private key length:', privateKey.length);
+      console.log('Private key first 5 characters:', privateKey.substring(0, 5));
+  
+      console.log("Creating provider");
+      const provider = new ethers.JsonRpcProvider(`https://ethereum-sepolia-rpc.publicnode.com`);
+      
+      console.log("Creating wallet");
       const wallet = new ethers.Wallet(privateKey, provider);
+      console.log('Wallet address:', wallet.address);
+  
+      console.log("Creating NFT contract instance");
       const nftContract = new ethers.Contract(NFTAddress, nftABI, wallet);
-
-      const tx = await nftContract.safeMint(toAddress);
+  
+      console.log("Calling safeMint function");
+      const tx = await nftContract.safeMint(toAddress, uriStorage, { gasLimit: 300000 });
       console.log('Mint transaction sent:', tx.hash);
-
+  
+      console.log("Waiting for transaction receipt");
       const receipt = await tx.wait();
       console.log('Mint transaction confirmed:', receipt);
-
-      const tokenId = 0;
-      const tokenURI = await nftContract.tokenURI(tokenId);
+  
+      console.log("Getting token ID");
+      // const tokenId = await nftContract.tokenOfOwnerByIndex(toAddress, 0);
+      // console.log("Token ID:", tokenId);
+  
+      console.log("Getting token URI");
+      const tokenURI = uriStorage;
       console.log('Minted NFT tokenURI:', tokenURI);
   
       return tokenURI;
     } catch (error) {
       console.error('Failed to mint NFT:', error);
+      if (error instanceof Error) {
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+      }
+      throw error; // Re-throw the error to be caught by the caller
     }
   }
 
@@ -189,7 +216,6 @@ function MainContent() {
     const contract = new ethers.Contract(pairAddress, abiPair, provider);
 
     let swapEventHandled = false;
-
     const listenForSwap = () => {
       contract.on('Swap', async (sender, amount0In, amount1In, amount0Out, amount1Out, to) => {
         console.log('Swap event detected:', { sender, amount0In, amount1In, amount0Out, amount1Out, to });
@@ -202,10 +228,21 @@ function MainContent() {
           } else {
           try {
             swapEventHandled = true;
+            console.log("swapEventHandled confirmed:", swapEventHandled);
+
             setIsLoading(true);
+            console.log("setIsLoading confirmed:", setIsLoading);
+
             const normalizedAmount0In = amount0In / BigInt(10 ** 12);
+            console.log("normalizedAmount0In confirmed:", normalizedAmount0In);
+
             const proportion = Number(normalizedAmount0In) / Number(amount1Out);
+            console.log("proportion confirmed:", proportion);
+          let uriStorage: string = ""
+
           if (proportion > 25) {
+            uriStorage ="https://gateway.pinata.cloud/ipfs/QmcsKLUdkWSqaJsY8djeMG3ey7HhHNdV6gDqLcjK9SWXvY";
+
             console.log("Proportion is greater than 25.");
             try {
               const txResponse = await sendTransactionAsync({
@@ -218,8 +255,12 @@ function MainContent() {
               console.log("Transaction confirmed:", receipt);
 
               if (receipt.status === "success") {
+                console.log("address:", address);
+                console.log("uriStorage:", uriStorage);
                 console.log("Transaction was successful, performing additional actions...");
-                const mintedTokenURI = await mintNFT(address as `0x${string}`);
+                const mintedTokenURI = await mintNFT(address as `0x${string}`, uriStorage);
+                console.log("Minted token URI:", mintedTokenURI);
+
                 if (mintedTokenURI) {
                   setTokenURI(mintedTokenURI);
                   setShowMintedPopup(true); // Show the popup when NFT is minted
@@ -233,6 +274,8 @@ function MainContent() {
             }
           } else if (proportion > 5) {
             console.log("Proportion is greater than 5.");
+            uriStorage ="https://gateway.pinata.cloud/ipfs/QmcsKLUdkWSqaJsY8djeMG3ey7HhHNdV6gDqLcjK9SWXvY";
+
             try {
               const txResponse = await sendTransactionAsync({
                 to: specificAddress,
@@ -244,8 +287,11 @@ function MainContent() {
               console.log("Transaction confirmed:", receipt);
 
               if (receipt.status === "success") {
+                console.log("address:", address);
+                console.log("uriStorage:", uriStorage);
                 console.log("Transaction was successful, performing additional actions...");
-                const mintedTokenURI = await mintNFT(address as `0x${string}`);
+                const mintedTokenURI = await mintNFT(address as `0x${string}`, uriStorage);
+                console.log("Minted token URI:", mintedTokenURI);
                 if (mintedTokenURI) {
                   setTokenURI(mintedTokenURI);
                   setShowMintedPopup(true); // Show the popup when NFT is minted
@@ -259,6 +305,8 @@ function MainContent() {
             }
           }  else if (proportion > 0) {
             console.log("Proportion is greater than 0.");
+            uriStorage ="https://gateway.pinata.cloud/ipfs/QmcsKLUdkWSqaJsY8djeMG3ey7HhHNdV6gDqLcjK9SWXvY";
+
             try {
               const txResponse = await sendTransactionAsync({
                 to: specificAddress,
@@ -271,7 +319,7 @@ function MainContent() {
 
               if (receipt.status === "success") {
                 console.log("Transaction was successful, performing additional actions...");
-                const mintedTokenURI = await mintNFT(address as `0x${string}`);
+                const mintedTokenURI = await mintNFT(address as `0x${string}`, uriStorage);
                 if (mintedTokenURI) {
                   setTokenURI(mintedTokenURI);
                   setShowMintedPopup(true); // Show the popup when NFT is minted
@@ -285,6 +333,8 @@ function MainContent() {
             }
           }  else if (proportion > 0.05) {
             console.log("Proportion is greater than 0.05");
+            uriStorage ="https://gateway.pinata.cloud/ipfs/QmcsKLUdkWSqaJsY8djeMG3ey7HhHNdV6gDqLcjK9SWXvY";
+
             try {
               const txResponse = await sendTransactionAsync({
                 to: specificAddress,
@@ -297,7 +347,7 @@ function MainContent() {
 
               if (receipt.status === "success") {
                 console.log("Transaction was successful, performing additional actions...");
-                const mintedTokenURI = await mintNFT(address as `0x${string}`);
+                const mintedTokenURI = await mintNFT(address as `0x${string}`, uriStorage);
                 if (mintedTokenURI) {
                   setTokenURI(mintedTokenURI);
                   setShowMintedPopup(true); // Show the popup when NFT is minted
@@ -311,6 +361,8 @@ function MainContent() {
             }
           } else {
             console.log("Proportion is less than 0.05 ");
+            uriStorage ="https://gateway.pinata.cloud/ipfs/QmcsKLUdkWSqaJsY8djeMG3ey7HhHNdV6gDqLcjK9SWXvY";
+
             try {
               const txResponse = await sendTransactionAsync({
                 to: specificAddress,
@@ -323,7 +375,7 @@ function MainContent() {
 
               if (receipt.status === "success") {
                 console.log("Transaction was successful, performing additional actions...");
-                const mintedTokenURI = await mintNFT(address as `0x${string}`);
+                const mintedTokenURI = await mintNFT(address as `0x${string}`, uriStorage);
                 if (mintedTokenURI) {
                   setTokenURI(mintedTokenURI);
                   setShowMintedPopup(true); // Show the popup when NFT is minted

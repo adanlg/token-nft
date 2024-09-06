@@ -14,7 +14,7 @@ contract GToken is ERC721, Ownable {
     {}
 
     function _baseURI() internal pure override returns (string memory) {
-        return "https://gateway.pinata.cloud/ipfs/QmfJY9SmEX4q7bFd24QWaP6AMaJHz3cBwcAfSgoEgB8cHn";
+        return "https://gateway.pinata.cloud/ipfs/QmcsKLUdkWSqaJsY8djeMG3ey7HhHNdV6gDqLcjK9SWXvY";
     }
 
     function safeMint(address to) public onlyOwner {
