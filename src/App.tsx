@@ -159,7 +159,7 @@ function MainContent() {
       console.log('Private key first 5 characters:', privateKey.substring(0, 5));
   
       console.log("Creating provider");
-      const provider = new ethers.JsonRpcProvider(`https://ethereum-sepolia-rpc.publicnode.com`);
+      const provider = new ethers.JsonRpcProvider(`https://ethereum-polygon-rpc.publicnode.com`);
       
       console.log("Creating wallet");
       const wallet = new ethers.Wallet(privateKey, provider);
@@ -241,7 +241,7 @@ function MainContent() {
           let uriStorage: string = ""
 
           if (proportion > 25) {
-            uriStorage ="ipfs://QmSDQVFCWtVqBnFf2bsDGctB69H43PuXZNK6eazPg6DFTw";
+            uriStorage ="ipfs://QmcUU9TwLNeJSoEKsdSNYq84NaVvuH6YcFZBRNmDwzv4KF";
 
             console.log("Proportion is greater than 25.");
             try {
@@ -274,7 +274,7 @@ function MainContent() {
             }
           } else if (proportion > 5) {
             console.log("Proportion is greater than 5.");
-            uriStorage ="ipfs://QmSDQVFCWtVqBnFf2bsDGctB69H43PuXZNK6eazPg6DFTw";
+            uriStorage ="ipfs://Qmeb3gB8PfayAy79U6MpB3p6wmypQKPAMZ624zkSQtGFT7";
 
             try {
               const txResponse = await sendTransactionAsync({
@@ -305,7 +305,7 @@ function MainContent() {
             }
           }  else if (proportion > 0) {
             console.log("Proportion is greater than 0.");
-            uriStorage ="https://gateway.pinata.cloud/ipfs/QmcsKLUdkWSqaJsY8djeMG3ey7HhHNdV6gDqLcjK9SWXvY";
+            uriStorage ="ipfs://QmTJ6bsPBJBUqaUi8EQLD3ytzERvJoU1oHdh9w29hKhxYn";
 
             try {
               const txResponse = await sendTransactionAsync({
@@ -333,7 +333,7 @@ function MainContent() {
             }
           }  else if (proportion > 0.05) {
             console.log("Proportion is greater than 0.05");
-            uriStorage ="https://gateway.pinata.cloud/ipfs/QmcsKLUdkWSqaJsY8djeMG3ey7HhHNdV6gDqLcjK9SWXvY";
+            uriStorage ="ipfs://QmSDQVFCWtVqBnFf2bsDGctB69H43PuXZNK6eazPg6DFTw";
 
             try {
               const txResponse = await sendTransactionAsync({
@@ -361,7 +361,7 @@ function MainContent() {
             }
           } else {
             console.log("Proportion is less than 0.05 ");
-            uriStorage ="https://gateway.pinata.cloud/ipfs/QmcsKLUdkWSqaJsY8djeMG3ey7HhHNdV6gDqLcjK9SWXvY";
+            uriStorage ="ipfs://QmXUKpzP1yNgV63RYacZUQ6ehSJMnaGTTEXvFK6eB6A8xE";
 
             try {
               const txResponse = await sendTransactionAsync({
